@@ -1,0 +1,130 @@
+<html>
+	<body>
+		<!-- <h1>Files Directory</h1> -->
+
+		<form
+			id="myForm"
+			action="http://localhost:3000/api/facilities"
+			method="POST"
+		>
+			<label for="brandID">Brand ID:</label>
+			<input type="text" id="brandID" name="brandID" required />
+
+			<label for="facilityCategoryID">Facility Category ID:</label>
+			<input
+				type="text"
+				id="facilityCategoryID"
+				name="facilityCategoryID"
+				required
+			/>
+
+			<label for="ownerID">Owner ID:</label>
+			<input type="text" id="ownerID" name="ownerID" required />
+
+			<label for="name">Name:</label>
+			<input type="text" id="name" name="name" required />
+
+			<label for="scheduleType">Schedule Type:</label>
+			<input type="text" id="scheduleType" name="scheduleType" required />
+
+			<label for="coordinates">Coordinates:</label>
+			<input
+				type="number"
+				id="coordinates"
+				name="coordinates[]"
+				required
+				multiple
+			/>
+
+			<label for="address">Address:</label>
+			<input
+				type="text"
+				id="street"
+				name="address[street]"
+				placeholder="Street"
+				required
+			/>
+			<input
+				type="text"
+				id="province"
+				name="address[province]"
+				placeholder="Province"
+				required
+			/>
+			<input
+				type="text"
+				id="provinceCode"
+				name="address[provinceCode]"
+				placeholder="Province Code"
+				required
+			/>
+			<input
+				type="text"
+				id="district"
+				name="address[district]"
+				placeholder="District"
+				required
+			/>
+			<input
+				type="text"
+				id="districtCode"
+				name="address[districtCode]"
+				placeholder="District Code"
+				required
+			/>
+			<input
+				type="text"
+				id="commune"
+				name="address[commune]"
+				placeholder="Commune"
+				required
+			/>
+			<input
+				type="text"
+				id="communeCode"
+				name="address[communeCode]"
+				placeholder="Commune Code"
+				required
+			/>
+
+			<label for="images">Images:</label>
+			<input type="file" id="images" name="images" accept="image/*" multiple />
+
+			<button type="submit">Submit</button>
+		</form>
+
+		<script>
+			document
+				.getElementById('myForm')
+				.addEventListener('submit', function (event) {
+					event.preventDefault(); // Ngăn chặn hành vi mặc định của form
+
+					var form = event.target;
+					var url = form.action;
+					var method = form.method;
+					var data = new FormData(form);
+
+					// Thực hiện các bước chỉnh sửa Authorization
+					var token =
+						'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDk3YzY4MDdhMTE0ZjViMzVhMzkzZmQiLCJlbWFpbCI6InRlc3QxQHRlc3QuY29tIiwicm9sZSI6Ik1FTUJFUiIsImlhdCI6MTY4NzY4ODc4MywiZXhwIjoxNjg3Njg5NjgzfQ._s2lV37zrBCMoKv6e9-F8-9dqdxWkfrAqmfcH1mpin0'; // Thay thế bằng giá trị token của bạn
+					var headers = new Headers();
+					headers.append('Authorization', 'Bearer ' + token);
+					console.log('DATA >> ', data);
+					// Gửi yêu cầu AJAX sử dụng fetch API
+					fetch(url, {
+						method: method,
+						headers: headers,
+						body: data,
+					})
+						.then(function (response) {
+							// Xử lý phản hồi từ server
+							console.log(`${response.status} data >> ${data}`);
+						})
+						.catch(function (error) {
+							// Xử lý lỗi
+							console.error(error);
+						});
+				});
+		</script>
+	</body>
+</html>
