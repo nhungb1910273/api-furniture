@@ -58,7 +58,7 @@ export class ShippingsController {
 	create(@Body() input: CreateShippingDto) {
 		return this.shippingService.create(input);
 	}
-	
+
 	@Public()
 	@Patch(':id')
 	update(@Param('id') id, @Body() input: UpdateShippingDto) {

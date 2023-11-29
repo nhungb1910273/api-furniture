@@ -56,47 +56,18 @@ export class CategoriesService {
 		}
 	}
 
-	// async findOneByRoomFurnitureId(filter: Partial<Category>): Promise<Category> {
-	// 	try {
-	// 		const objectID = new mongoose.Types.ObjectId(filter.roomFurnitureId);
-	// 		const category = await this.categoryModel.aggregate([
-	// 			{ $match: { roomFurnitureId: objectID } },
-
-	// 			{
-	// 				$lookup: {
-	// 					from: 'roomfurnitures',
-	// 					localField: 'roomFurnitureId',
-	// 					foreignField: '_id',
-	// 					as: 'roomFurnitureId',
-	// 				},
-	// 			},
-	// 			{ $unwind: '$roomFurnitureId' },
-	// 		]);
-	// 		return category[0];
-	// 	} catch (error) {
-	// 		throw new BadRequestException(
-	// 			'An error occurred while retrieving Categorys',
-	// 		);
-	// 	}
-	// }
-
 	async findAll(
 		filter: ListOptions<Category>,
 	): Promise<ListResponse<Category>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.categoryModel
-				.find(
-					filter.search
-						? {
-								...filter,
-								name: { $regex: filter.search, $options: 'i' },
-						  }
-						: filter,
-				)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)

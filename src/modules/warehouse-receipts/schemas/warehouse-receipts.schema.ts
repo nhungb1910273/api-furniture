@@ -8,8 +8,8 @@ import { WarehouseReceiptDetail } from 'src/modules/warehouse-receipt-details/sc
 export type WarehouseReceiptDocument = HydratedDocument<WarehouseReceipt>;
 
 export enum WRStatus {
-	Approve = 'Approve',
-	Unapproved = 'Unapproved',
+	Approved = 'Approved',
+	UnApproved = 'UnApproved',
 }
 @Schema({ timestamps: true })
 export class WarehouseReceipt extends BaseObject {
@@ -33,13 +33,14 @@ export class WarehouseReceipt extends BaseObject {
 				type: mongoose.Schema.Types.ObjectId,
 				ref: 'WarehouseReceiptDetail',
 				required: true,
+				default: [],
 			},
 		],
 	})
 	warehouseReceiptDetails: WarehouseReceiptDetail[];
 
-	@Prop({ type: Date })
-	importDate: Date;
+	// @Prop({ type: Date })
+	// importDate: Date;
 
 	@Prop({ type: Date, default: null })
 	confirmationDate: Date;
@@ -54,7 +55,7 @@ export class WarehouseReceipt extends BaseObject {
 	totalPrice: number;
 
 	@Prop({
-		default: WRStatus.Unapproved,
+		default: WRStatus.UnApproved,
 		enum: WRStatus,
 		type: String,
 	})

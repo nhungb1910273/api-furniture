@@ -5,6 +5,7 @@ import {
 	Get,
 	NotFoundException,
 	Param,
+	Patch,
 	Post,
 	Query,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import { Permission } from './schemas/permissions.schema';
 // import { DefaultListDto } from 'src/shared/dto/default-list-dto';
 import { ApiDocsPagination } from 'src/decorators/swagger-form-data.decorator';
 import { ListOptions } from 'src/shared/response/common-response';
+import { UpdatePermissionDto } from './dto/update-permission.dto';
 
 @ApiTags('permissions')
 @Controller('permissions')
@@ -41,6 +43,23 @@ export class PermissionsController {
 	})
 	getPermissionById(@Param('id') id) {
 		return this.permissionsService.findOneById(id);
+	}
+
+	@Public()
+	@Get('by-code/:code')
+	@ApiParam({ name: 'code', type: String, description: 'Permission code' })
+	@ApiOperation({
+		summary: 'Get Permission by code',
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 400,
+		description: 'Permission not found!',
+	})
+	findOneByCode(@Param('code') code) {
+		return this.permissionsService.findOneByCode({
+			code: code,
+		});
 	}
 
 	@Public()
@@ -91,5 +110,36 @@ export class PermissionsController {
 	})
 	createPermission(@Body() input: CreatePermissionDto) {
 		return this.permissionsService.create(input);
+	}
+
+	@Public()
+	@Patch('update-status/:id')
+	@ApiParam({ name: 'id', type: String, description: 'Permission ID' })
+	@ApiOperation({
+		summary: 'Get Permission by ID',
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 400,
+		description: 'Permission not found!',
+	})
+	updateStatus(@Param('id') id, @Body() input: UpdatePermissionDto) {
+		return this.permissionsService.updateStatusPermission(input, id);
+	}
+
+	@Public()
+	@Patch(':id')
+	@ApiParam({ name: 'id', type: String, description: 'Permission ID' })
+	@ApiOperation({
+		summary: 'Get Permission by ID',
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 400,
+		description: 'Permission not found!',
+	})
+	updateOne(@Param('id') id, @Body() input: UpdatePermissionDto) {
+		console.log('update', input);
+		return this.permissionsService.updateOne(input, id);
 	}
 }

@@ -6,6 +6,7 @@ import { Blog, BlogSchema } from './schemas/blogs.schema';
 import { BlogsService } from './blogs.service';
 import { BlogsController } from './blogs.controller';
 import { CategoriesModule } from '../categories/categories.module';
+import { CommentsModule } from '../comments/comments.module';
 
 @Module({
 	imports: [
@@ -13,6 +14,7 @@ import { CategoriesModule } from '../categories/categories.module';
 		PhotoModule,
 		RoomFurnituresModule,
 		CategoriesModule,
+		CommentsModule,
 	],
 	providers: [BlogsService],
 	exports: [BlogsService],

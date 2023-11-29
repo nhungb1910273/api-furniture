@@ -6,6 +6,7 @@ import {
 	Get,
 	NotFoundException,
 	Param,
+	Patch,
 	Post,
 	Query,
 } from '@nestjs/common';
@@ -23,6 +24,7 @@ import { Public } from '../auth/decorators/public.decorator';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { Comment } from './schemas/comments.schemas';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -44,6 +46,7 @@ export class CommentsController {
 		return await this.commentService.create(CommentDto);
 	}
 
+	@Public()
 	@Delete(':CommentID')
 	// @ApiBearerAuth()
 	@ApiOperation({
@@ -99,5 +102,15 @@ export class CommentsController {
 		return this.commentService.findOne({
 			_id: CommentID,
 		});
+	}
+
+	@Public()
+	@Patch(':id')
+	@ApiOperation({
+		summary: 'Get many Comment',
+	})
+	@ApiParam({ name: 'id', type: String, description: 'Comment ID' })
+	updateStatus(@Param('id') id, @Body() commentDto: UpdateCommentDto) {
+		return this.commentService.updateStatus(commentDto, id);
 	}
 }

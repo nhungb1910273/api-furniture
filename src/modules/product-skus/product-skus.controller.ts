@@ -30,6 +30,7 @@ import { CreateProductSkuDto } from './dto/create-product-sku.dto';
 import { UpdateProductSkuDto } from './dto/update-product-sku.dto';
 import { ProductSkusService } from './product-skus.service';
 import { ProductSku } from './schemas/product-skus.schemas';
+import { CreateReviewDto } from '../reviews/dto/create-review.dto';
 
 @ApiTags('product-skus')
 @Controller('product-skus')
@@ -134,8 +135,13 @@ export class ProductSkusController {
 	@Public()
 	@Patch(':id')
 	@ApiParam({ name: 'id', type: String, description: 'Product sku ID' })
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
 	@UseInterceptors(
-		FileFieldsInterceptor([{ name: 'photoUpdates', maxCount: 5 }]),
+		FileFieldsInterceptor([{ name: 'photoUpdates', maxCount: 10 }]),
 	)
 	@ApiConsumes('multipart/form-data')
 	update(
@@ -181,5 +187,36 @@ export class ProductSkusController {
 	})
 	deleteMany() {
 		return this.productSkuService.deleteMany();
+	}
+
+	@Patch(':productSkuId/reviews/add')
+	@ApiOperation({
+		summary: 'Add the newest reviews to the productSku',
+	})
+	@ApiConsumes('multipart/form-data')
+	@ApiParam({
+		name: 'productSkuId',
+		type: String,
+		description: 'productSku ID',
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	@UseInterceptors(FileFieldsInterceptor([{ name: 'photos', maxCount: 5 }]))
+	async addReviewFacility(
+		@Param('productSkuId') productSkuId,
+		@Body() reviewDto: CreateReviewDto,
+		@UploadedFiles()
+		files?: {
+			photos?: Express.Multer.File[];
+		},
+	) {
+		return await this.productSkuService.addReview(
+			productSkuId,
+			reviewDto,
+			files,
+		);
 	}
 }

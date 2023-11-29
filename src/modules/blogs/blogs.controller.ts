@@ -30,6 +30,7 @@ import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { Blog } from './schemas/blogs.schema';
 import { UpdateBlogDto } from './dto/update-blog.dto';
+import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 
 @ApiTags('blogs')
 @Controller('blogs')
@@ -105,6 +106,7 @@ export class BlogsController {
 	@UseInterceptors(
 		FileFieldsInterceptor([{ name: 'photoUpdates', maxCount: 5 }]),
 	)
+	@ApiConsumes('multipart/form-data')
 	updateBlog(
 		@Param('id') id,
 		@Body() updateBlogDto: UpdateBlogDto,
@@ -112,6 +114,36 @@ export class BlogsController {
 		files?: { photoUpdates?: Express.Multer.File[] },
 	) {
 		return this.blogService.updateOne(updateBlogDto, id, files);
+	}
+
+	@Public()
+	@Patch('update-status/:id')
+	@ApiOperation({
+		summary: 'Update a Blog',
+	})
+	@ApiParam({ name: 'id', type: String, description: 'Blog ID' })
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	updateStatusBlog(@Param('id') id, @Body() updateBlogDto: UpdateBlogDto) {
+		return this.blogService.updateStatus(updateBlogDto, id);
+	}
+
+	@Public()
+	@Patch('add-comment/:id')
+	@ApiOperation({
+		summary: 'add comment Blog',
+	})
+	@ApiParam({ name: 'id', type: String, description: 'Blog ID' })
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	addComment(@Param('id') id, @Body() commentDto: CreateCommentDto) {
+		return this.blogService.addComment(id, commentDto);
 	}
 
 	@Public()

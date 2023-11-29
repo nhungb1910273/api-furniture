@@ -9,13 +9,9 @@ import {
 	Patch,
 	Post,
 	Query,
-	UploadedFiles,
-	UseInterceptors,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
 	ApiBadRequestResponse,
-	ApiConsumes,
 	ApiNotFoundResponse,
 	ApiOperation,
 	ApiParam,
@@ -24,11 +20,12 @@ import {
 } from '@nestjs/swagger';
 import { ApiDocsPagination } from 'src/decorators/swagger-form-data.decorator';
 import { ListOptions } from 'src/shared/response/common-response';
-import { SuccessResponse } from 'src/shared/response/success-response';
 import { Public } from '../auth/decorators/public.decorator';
-import { WarehouseReceiptsService } from './warehouse-receipts.service';
-import { WarehouseReceipt } from './schemas/warehouse-receipts.schema';
 import { CreateWarehouseReceiptDto } from './dto/create-warehouse-receipts.dto';
+import { UpdateWarehouseReceiptDto } from './dto/update-warehouse-receipts.dto';
+import { WarehouseReceipt } from './schemas/warehouse-receipts.schema';
+import { WarehouseReceiptsService } from './warehouse-receipts.service';
+import { SuccessResponse } from 'src/shared/response/success-response';
 
 @ApiTags('warehouse-receipts')
 @Controller('warehouse-receipts')
@@ -83,60 +80,95 @@ export class WarehouseReceiptsController {
 		description: '[Input] invalid!',
 	})
 	createWarehouseReceipt(@Body() input: CreateWarehouseReceiptDto) {
-		return this.warehouseReceiptService.create(input);
+		return this.warehouseReceiptService.createOne(input);
 	}
 
-	// @Public()
-	// @Patch()
-	// @ApiOperation({
-	// 	summary: 'Update a category',
-	// })
-	// @ApiParam({ name: 'id', type: String, description: 'category ID' })
-	// @ApiBadRequestResponse({
-	// 	type: BadRequestException,
-	// 	status: 400,
-	// 	description: '[Input] invalid!',
-	// })
-	// @UseInterceptors(FileFieldsInterceptor([{ name: 'photos', maxCount: 5 }]))
-	// updateCategory(
-	// 	@Param('id') id,
-	// 	@Body() updateCategoryDto: UpdateCategoryDto,
-	// 	@UploadedFiles()
-	// 	photos?: Express.Multer.File[],
-	// ) {
-	// 	return this.warehouseReceiptService.updateOne(
-	// 		updateCategoryDto,
-	// 		id,
-	// 		photos,
-	// 	);
-	// }
+	@Public()
+	@Patch('add-WR-detail')
+	@ApiOperation({
+		summary: 'Update a WR detail',
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	addWRD(@Body() input: UpdateWarehouseReceiptDto) {
+		return this.warehouseReceiptService.addWRD(input);
+	}
 
-	// @Public()
-	// @Delete(':id')
-	// @ApiOperation({
-	// 	summary: 'Delete a category',
-	// })
-	// @ApiParam({ name: 'id', type: String, description: 'category ID' })
-	// @ApiResponse({
-	// 	schema: {
-	// 		example: {
-	// 			code: 200,
-	// 			message: 'Success',
-	// 		} as SuccessResponse<null>,
-	// 	},
-	// 	status: 200,
-	// })
-	// @ApiBadRequestResponse({
-	// 	type: BadRequestException,
-	// 	status: 400,
-	// 	description: '[Input] invalid!',
-	// })
-	// @ApiNotFoundResponse({
-	// 	type: NotFoundException,
-	// 	status: 404,
-	// 	description: 'category not found!',
-	// })
-	// deleteCategory(@Param() id: string) {
-	// 	return this.warehouseReceiptService.deleteOne(id);
-	// }
+	@Public()
+	@Patch('review/:id')
+	@ApiParam({ name: 'id', type: String, description: 'Bill ID' })
+	@ApiOperation({
+		summary: 'Update a Bill',
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	updateRequestCancel(
+		@Param('id') id,
+		@Body() input: UpdateWarehouseReceiptDto,
+	) {
+		console.log(input);
+		return this.warehouseReceiptService.updateStatus(input, id);
+	}
+	@Public()
+	@Delete(':id')
+	@ApiOperation({
+		summary: 'Delete a category',
+	})
+	@ApiParam({ name: 'id', type: String, description: 'category ID' })
+	@ApiResponse({
+		schema: {
+			example: {
+				code: 200,
+				message: 'Success',
+			} as SuccessResponse<null>,
+		},
+		status: 200,
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 404,
+		description: 'category not found!',
+	})
+	deleteWR(@Param() id: string) {
+		return this.warehouseReceiptService.deleteOne(id);
+	}
+
+	@Public()
+	@Delete()
+	@ApiOperation({
+		summary: 'Delete a Blog',
+	})
+	@ApiResponse({
+		schema: {
+			example: {
+				code: 200,
+				message: 'Success',
+			} as SuccessResponse<null>,
+		},
+		status: 200,
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 404,
+		description: 'Product not found!',
+	})
+	deleteMany() {
+		return this.warehouseReceiptService.deleteMany();
+	}
 }

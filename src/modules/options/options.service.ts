@@ -24,19 +24,14 @@ export class OptionsService {
 
 	async findAll(filter: ListOptions<Option>): Promise<ListResponse<Option>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.optionModel
-				.find(
-					filter.search
-						? {
-								...filter,
-								name: { $regex: filter.search, $options: 'i' },
-						  }
-						: filter,
-				)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)

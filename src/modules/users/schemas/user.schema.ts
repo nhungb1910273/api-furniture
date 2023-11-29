@@ -4,6 +4,7 @@ import { BaseObject } from '../../../shared/schemas/base-object.schema';
 import { UserAddress } from './user-address.schema';
 import { Photo, PhotoSchema } from 'src/modules/photos/schemas/photo.schema';
 import { Role } from 'src/modules/roles/schemas/roles.schema';
+import { Product } from 'src/modules/products/schemas/products.schema';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -98,6 +99,18 @@ export class User extends BaseObject {
 
 	@Prop({ default: UserStatus.Active, enum: UserStatus, type: String })
 	status: UserStatus;
+
+	@Prop({
+		type: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'Product',
+				required: false,
+				default: [],
+			},
+		],
+	})
+	products?: Product[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

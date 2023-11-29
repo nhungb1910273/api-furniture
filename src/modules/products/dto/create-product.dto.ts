@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
 	IsBoolean,
 	IsNotEmpty,
@@ -7,9 +7,6 @@ import {
 	IsOptional,
 	IsString,
 } from 'class-validator';
-import { CreateOptionNullDto } from 'src/modules/sku-values/dto/create-option-null.dto';
-import { OptionNull } from 'src/modules/sku-values/schemas/option-null.schema';
-import { SkuValue } from 'src/modules/sku-values/schemas/sku-values.schemas';
 
 export class CreateProductDto {
 	@ApiProperty()
@@ -40,11 +37,11 @@ export class CreateProductDto {
 	@IsString()
 	content: string;
 
-	@ApiProperty({ required: false, default: 0 })
-	@IsOptional()
-	@IsNumber()
-	@Type(() => Number)
-	view?: number;
+	// @ApiProperty({ required: false, default: 0 })
+	// @IsOptional()
+	// @IsNumber()
+	// @Type(() => Number)
+	// view?: number;
 
 	@ApiProperty({ required: false })
 	@IsOptional()
@@ -62,14 +59,8 @@ export class CreateProductDto {
 	@IsBoolean()
 	isHidden: boolean;
 
-	@ApiProperty()
-	@IsOptional()
-	@IsBoolean()
-	isFavorite: boolean;
-
-	@IsOptional()
-	// @Type(() => CreateSkuValueDto)
-	// @ValidateNested({ each: true })
-	@Transform(({ value }) => JSON.parse(value))
-	skuValues?: CreateOptionNullDto[];
+	// @ApiProperty()
+	// @IsOptional()
+	// @IsBoolean()
+	// isFavorite: boolean;
 }

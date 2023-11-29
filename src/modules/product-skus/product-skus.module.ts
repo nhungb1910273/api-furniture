@@ -5,6 +5,8 @@ import { SkuValuesModule } from '../sku-values/sku-values.module';
 import { ProductSkusController } from './product-skus.controller';
 import { ProductSkusService } from './product-skus.service';
 import { ProductSku, ProductSkuSchema } from './schemas/product-skus.schemas';
+import { ReviewsModule } from '../reviews/reviews.module';
+import { OptionValuesModule } from '../option-values/option-values.module';
 
 @Module({
 	imports: [
@@ -13,6 +15,8 @@ import { ProductSku, ProductSkuSchema } from './schemas/product-skus.schemas';
 		]),
 		PhotoModule,
 		SkuValuesModule,
+		ReviewsModule,
+		OptionValuesModule,
 	],
 	providers: [ProductSkusService],
 	exports: [ProductSkusService],

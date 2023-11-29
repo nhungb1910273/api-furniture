@@ -8,6 +8,7 @@ export type ListOptions<T = any> = Partial<T> & {
 	room?: string;
 	cat?: string;
 	roleId?: string;
+	quantitySold?: boolean;
 };
 
 export interface ListResponse<T> {

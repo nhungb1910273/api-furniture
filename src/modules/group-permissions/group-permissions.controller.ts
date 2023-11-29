@@ -5,6 +5,7 @@ import {
 	Get,
 	NotFoundException,
 	Param,
+	Patch,
 	Post,
 	Query,
 } from '@nestjs/common';
@@ -18,13 +19,14 @@ import {
 	ApiParam,
 	ApiTags,
 } from '@nestjs/swagger';
+import { ApiDocsPagination } from 'src/decorators/swagger-form-data.decorator';
+import { ESortOrder } from 'src/shared/enum/sort.enum';
+import { ListOptions, ListResponse } from 'src/shared/response/common-response';
 import { Public } from '../auth/decorators/public.decorator';
+import { CreateGroupPermissionDto } from './dto/create-group-permission.dto';
+import { UpdateGroupPermissionDto } from './dto/update-group-permission.dto';
 import { GroupPermissionsService } from './group-permissions.service';
 import { GroupPermission } from './schemas/group-permissions.schema';
-import { CreateGroupPermissionDto } from './dto/create-group-permission.dto';
-import { ListOptions, ListResponse } from 'src/shared/response/common-response';
-import { ApiDocsPagination } from 'src/decorators/swagger-form-data.decorator';
-import { ESortField, ESortOrder } from 'src/shared/enum/sort.enum';
 
 @ApiTags('group-permissions')
 @Controller('group-permissions')
@@ -145,5 +147,36 @@ export class GroupPermissionsController {
 	})
 	createGroupPermission(@Body() input: CreateGroupPermissionDto) {
 		return this.groupPermissionService.create(input);
+	}
+
+	@Public()
+	@Patch(':id')
+	@ApiParam({ name: 'id', type: String, description: 'group permission ID' })
+	@ApiOperation({
+		summary: 'Get group permission by ID',
+	})
+	@ApiOkResponse({
+		status: 200,
+		schema: {
+			example: {
+				_id: '_id',
+				name: 'string',
+				description: 'string',
+				permissions: [],
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			} as GroupPermission,
+		},
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 400,
+		description: 'group permission not found!',
+	})
+	updateGroupPermission(
+		@Param('id') id,
+		@Body() input: UpdateGroupPermissionDto,
+	) {
+		return this.groupPermissionService.updateOne(input, id);
 	}
 }

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { BaseObject } from '../../../shared/schemas/base-object.schema';
+import { ProductSku } from 'src/modules/product-skus/schemas/product-skus.schemas';
 
 export type DetailCartDocument = HydratedDocument<DetailCart>;
 
@@ -12,7 +13,7 @@ export class DetailCart extends BaseObject {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'ProductSku',
 	})
-	productSku: string;
+	productSku: ProductSku | string;
 
 	@Prop({ type: String, required: true, minlength: 2, maxlength: 50 })
 	name: string;

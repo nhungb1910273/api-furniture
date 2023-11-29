@@ -12,25 +12,23 @@ import {
 	UploadedFile,
 	UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
 	ApiBadRequestResponse,
 	ApiConsumes,
 	ApiNotFoundResponse,
-	ApiOkResponse,
 	ApiOperation,
 	ApiParam,
 	ApiResponse,
 	ApiTags,
 } from '@nestjs/swagger';
-import { DefaultListDto } from 'src/shared/dto/default-list-dto';
-import { Public } from '../auth/decorators/public.decorator';
-import { OptionValuesService } from './option-values.service';
-import { CreateOptionValueDto } from './dto/create-option-value.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { ListOptions } from 'src/shared/response/common-response';
-import { OptionValue } from './schemas/option-values.schemas';
-import { UpdateOptionValueDto } from './dto/update-option-value.dto';
 import { SuccessResponse } from 'src/shared/response/success-response';
+import { Public } from '../auth/decorators/public.decorator';
+import { CreateOptionValueDto } from './dto/create-option-value.dto';
+import { UpdateOptionValueDto } from './dto/update-option-value.dto';
+import { OptionValuesService } from './option-values.service';
+import { OptionValue } from './schemas/option-values.schemas';
 
 @ApiTags('option-values')
 @Controller('option-values')

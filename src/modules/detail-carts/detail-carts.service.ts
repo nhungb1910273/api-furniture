@@ -93,6 +93,7 @@ export class DetailCartsService {
 				productSku: id,
 			});
 			if (findDetailCart) {
+				console.log('findDetailCart', findDetailCart);
 				const updateDetailCart = await this.detailCartModel.findOneAndUpdate(
 					{ _id: findDetailCart._id },
 					input,

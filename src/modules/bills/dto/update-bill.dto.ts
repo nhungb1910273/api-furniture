@@ -6,4 +6,7 @@ export class UpdateBillDto extends PartialType(CreateBillDto) {
 	@IsOptional()
 	@IsString()
 	billId?: string;
+
+	@IsOptional()
+	requestCancel?: boolean;
 }

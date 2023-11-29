@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Review, ReviewSchema } from './schemas/reviews.shemas';
 import { PhotoModule } from '../photos/photo.module';
 import { ReviewsService } from './reviews.service';
+import { ProductSkusModule } from '../product-skus/product-skus.module';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { ReviewsService } from './reviews.service';
 		// 	},
 		// ]),
 		PhotoModule,
+		// ProductSkusModule,
 	],
 	controllers: [ReviewsController],
 	providers: [ReviewsService],

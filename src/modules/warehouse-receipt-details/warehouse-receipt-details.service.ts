@@ -10,6 +10,7 @@ import {
 	WarehouseReceiptDetail,
 	WarehouseReceiptDetailDocument,
 } from './schemas/warehouse-receipt-details.schema';
+import { UpdateWarehouseReceipDetailtDto } from './dto/update-warehouse-receipt-details.dto';
 @Injectable()
 export class WarehouseReceiptDetailsService {
 	constructor(
@@ -59,16 +60,28 @@ export class WarehouseReceiptDetailsService {
 		input: CreateWarehouseReceiptDetailDto,
 	): Promise<WarehouseReceiptDetail> {
 		try {
+			console.log('input createRWDetail', input);
 			const productSku = await this.productSkuService.findOne({
 				_id: input.productSku,
 			});
-			if (!productSku) {
+			if (productSku) {
+				const name = (Math.random() + 1000000).toString(36).substring(7);
+				input.name = name;
+				input.productSku = productSku._id;
+				console.log('pr', input);
 				const createWarehouseReceiptDetail =
 					await this.warehouseReceiptDetailModel.create(input);
-
-				return await createWarehouseReceiptDetail.save();
+				if (createWarehouseReceiptDetail) {
+					console.log(
+						'createWarehouseReceiptDetail',
+						createWarehouseReceiptDetail,
+					);
+					return createWarehouseReceiptDetail;
+				} else {
+					throw new BadRequestException('Create warehouse failed!');
+				}
 			}
-			throw new BadRequestException('Product sku has existed!');
+			throw new BadRequestException('Product sku not found!');
 		} catch (err) {
 			return err;
 		}
@@ -89,32 +102,42 @@ export class WarehouseReceiptDetailsService {
 	// 	}
 	// }
 
-	// async updateOne(input: UpdateWarehouseReceiptDetailDto, filter: Partial<WarehouseReceiptDetail>): Promise<WarehouseReceiptDetail> {
-	// 	const { name, place, email } = input;
-
-	// 	try {
-	// 		if (name || place || email) {
-	// 			return await this.warehouseReceiptDetailModel.findByIdAndUpdate(filter._id, input, {
-	// 				new: true,
-	// 			});
-	// 		}
-	// 		throw new BadRequestException('Data invalid!');
-	// 	} catch (err) {
-	// 		throw new BadRequestException(err);
-	// 	}
-	// }
-
-	async deleteOne({
-		id,
-	}: any): Promise<SuccessResponse<WarehouseReceiptDetail>> {
+	async updateQuantityProductSku(
+		input: UpdateWarehouseReceipDetailtDto,
+	): Promise<boolean> {
 		try {
-			if (!isValidObjectId(id)) throw new BadRequestException('ID invalid!');
+			const findProductSku = await this.productSkuService.findOne({
+				_id: input.productSku,
+			});
+			if (findProductSku) {
+				const updateProductSku = await this.productSkuService.updateOne(
+					{
+						quantityInStock: findProductSku.quantityInStock + input.quantity,
+					},
+					input.productSku,
+				);
+				if (updateProductSku) {
+					return true;
+				} else {
+					throw new BadRequestException('Update Product Sku failed!');
+				}
+			}
+			throw new BadRequestException('Product Sku not found!');
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
 
-			await this.warehouseReceiptDetailModel.findOneAndRemove({
+	async deleteOne(id: string): Promise<string> {
+		try {
+			const remove = await this.warehouseReceiptDetailModel.findOneAndRemove({
 				_id: id,
 			});
-
-			return;
+			if (remove) {
+				return 'Success';
+			} else {
+				throw new BadRequestException('NO success');
+			}
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

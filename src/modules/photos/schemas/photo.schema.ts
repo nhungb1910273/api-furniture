@@ -28,6 +28,7 @@ export const PhotoSchema = SchemaFactory.createForClass(Photo);
 export const PhotoSchemaFactory = () => {
 	const photoSchema = PhotoSchema;
 	const fileHost = appConfig.fileHost;
+	console.log('fileHost', fileHost);
 	// const fileHostServer = 'https://staging-file.fitivation.go.drimaesvn.com';
 
 	photoSchema.pre('save', async function (next) {

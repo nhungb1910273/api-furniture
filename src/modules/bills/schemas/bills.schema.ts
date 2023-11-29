@@ -60,12 +60,10 @@ export class Bill extends BaseObject {
 	])
 	billItems: BillItem[];
 
-	@Prop([
-		{
-			type: PromotionSchema,
-		},
-	])
-	promotions?: Promotion[];
+	@Prop({
+		type: PromotionSchema,
+	})
+	promotion: Promotion;
 
 	@Prop({
 		default: BillPaymentMethod.Cod,
@@ -76,6 +74,9 @@ export class Bill extends BaseObject {
 
 	@Prop({ default: BillStatus.Waiting, enum: BillStatus })
 	status: BillStatus;
+
+	@Prop({ default: false, type: Boolean })
+	requestCancel: boolean;
 }
 
 export const BillSchema = SchemaFactory.createForClass(Bill);

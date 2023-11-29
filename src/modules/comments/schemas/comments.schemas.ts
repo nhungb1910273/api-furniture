@@ -7,8 +7,8 @@ import { BaseObject } from 'src/shared/schemas/base-object.schema';
 export type CommentDocument = HydratedDocument<Comment>;
 
 export enum CommentStatus {
-	Approve = 'Approve',
-	Unapproved = 'Unapproved',
+	Approved = 'Approved',
+	UnApproved = 'UnApproved',
 }
 @Schema({
 	timestamps: true,
@@ -21,7 +21,7 @@ export class Comment extends BaseObject {
 		ref: 'Blog',
 		required: true,
 	})
-	blog: Blog;
+	blog: string;
 
 	@Prop({
 		type: mongoose.Schema.Types.ObjectId,
@@ -35,7 +35,7 @@ export class Comment extends BaseObject {
 
 	@Prop({
 		enum: CommentStatus,
-		default: CommentStatus.Unapproved,
+		default: CommentStatus.UnApproved,
 		type: String,
 	})
 	status: CommentStatus;

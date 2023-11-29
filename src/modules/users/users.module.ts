@@ -3,11 +3,10 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
-// import { CartsModule } from '../carts/carts.module';
-
 import { PhotoModule } from '../photos/photo.module';
 import { RolesModule } from '../roles/roles.module';
 import { CartsModule } from '../carts/carts.module';
+import { appConfig } from 'src/app.config';
 
 @Module({
 	imports: [
@@ -15,6 +14,10 @@ import { CartsModule } from '../carts/carts.module';
 		CartsModule,
 		PhotoModule,
 		RolesModule,
+		// StripeModule.forRoot({
+		// 	apiKey: `${appConfig.stripeSecretKey}`,
+		// 	apiVersion: '2022-11-15',
+		// }),
 	],
 	providers: [UsersService],
 	exports: [UsersService],

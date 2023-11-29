@@ -1,43 +1,54 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
+import { Bill } from 'src/modules/bills/schemas/bills.schema';
 import { Photo, PhotoSchema } from 'src/modules/photos/schemas/photo.schema';
-import { Product } from 'src/modules/products/schemas/products.schema';
+import { ProductSku } from 'src/modules/product-skus/schemas/product-skus.schemas';
 import { User } from 'src/modules/users/schemas/user.schema';
 import { BaseObject } from 'src/shared/schemas/base-object.schema';
 
 export type ReviewDocument = HydratedDocument<Review>;
 
 export enum ReviewStatus {
-	Approve = 'Approve',
-	Unapproved = 'Unapproved',
+	Approved = 'Approved',
+	UnApproved = 'UnApproved',
 }
 
 @Schema({ timestamps: true })
 export class Review extends BaseObject {
 	@Prop({
-		type: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'User',
-			required: true,
-		},
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		required: true,
 	})
 	user: User;
 
 	@Prop({
-		type: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'Product',
-			required: true,
-		},
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Bill',
+		required: true,
 	})
-	product: Product;
+	bill: Bill;
 
-	@Prop({ type: String, required: true, minlength: 2, maxlength: 50 })
+	@Prop({
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'ProductSku',
+		required: true,
+	})
+	productSku: string;
+
+	@Prop({
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Product',
+		required: true,
+	})
+	product: string;
+
+	@Prop({ type: String, required: true, minlength: 2 })
 	content: string;
 
 	@Prop({
 		type: Number,
-		required: false,
+		required: true,
 		default: 0,
 	})
 	rating: number;
@@ -49,7 +60,7 @@ export class Review extends BaseObject {
 
 	@Prop({
 		enum: ReviewStatus,
-		default: ReviewStatus.Unapproved,
+		default: ReviewStatus.UnApproved,
 		type: String,
 	})
 	status: ReviewStatus;

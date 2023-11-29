@@ -8,7 +8,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 
 import mongoose, { Model, isValidObjectId } from 'mongoose';
-import { appConfig } from 'src/app.config';
 import { ESortOrder } from 'src/shared/enum/sort.enum';
 import { ListOptions, ListResponse } from 'src/shared/response/common-response';
 import { Encrypt } from 'src/shared/utils/encrypt';
@@ -29,36 +28,61 @@ import {
 	UserType,
 } from './schemas/user.schema';
 // import { InjectStripe } from 'nestjs-stripe';
-import Stripe from 'stripe';
 import { UpdateUserAddressDto } from './dto/update-user-address.dto';
+import { UpdateProductFavoriteDto } from './dto/update-product-favorite.dto';
 // import paypal from '@paypal/checkout-server-sdk';
 
 @Injectable()
 export class UsersService {
 	private stripe: any;
-	private paypalModel: any;
+	// private paypalModel: any;
 	constructor(
 		@InjectModel(User.name)
 		private userModel: Model<UserDocument>,
 		private roleService: RolesService,
 		private photoService: PhotoService,
 		private cartService: CartsService,
-	) {
-		this.stripe = new Stripe(`${appConfig.stripeSecretKey}`, {
-			apiVersion: '2022-11-15',
-		});
-		// this.paypalModel = new paypal.orders.OrdersCreateRequest();
+	) {}
+	async getQuantityUsersStats(): Promise<object> {
+		const numberUsers = await this.userModel
+			.find({ role: { $ne: UserType.Personnel } })
+			.count();
+
+		return { numberUsers };
+	}
+
+	async getQuantityCustomersStats(): Promise<object> {
+		const numberCustomers = await this.userModel
+			.find({ role: UserType.Customer })
+			.count();
+
+		return { numberCustomers };
 	}
 
 	async getCurrentUser(userID: string): Promise<User> {
-		const user = await this.userModel.findById(userID);
-
-		if (!user) throw new NotFoundException('Logged User no longer exists');
-
-		user.password = undefined;
-		user.refreshToken = undefined;
-		console.log(user);
-		return user;
+		try {
+			return await this.userModel
+				.findOne({
+					_id: userID,
+				})
+				.populate([
+					{
+						path: 'roles',
+						populate: 'permissions',
+					},
+					{
+						path: 'products',
+						populate: {
+							path: 'productSkus',
+							populate: { path: 'optionValues', populate: 'optionSku' },
+						},
+					},
+				]);
+		} catch (error) {
+			throw new BadRequestException(
+				'An error occurred while retrieving Products',
+			);
+		}
 	}
 
 	async updateAvatar(
@@ -85,9 +109,7 @@ export class UsersService {
 	}
 
 	async findOneAndUpdate(userId: string, updateUserDto: UpdateUserDto) {
-		const findUser = await this.userModel.findOne({
-			_id: userId,
-		});
+		const findUser = await this.getCurrentUser(userId);
 		if (findUser) {
 			if (updateUserDto.address && updateUserDto.address.length > 0) {
 				const data = updateUserDto.address.filter(
@@ -108,36 +130,9 @@ export class UsersService {
 
 			if (!user) throw new NotFoundException('User not found');
 			return user;
+		} else {
+			throw new NotFoundException('User not found');
 		}
-
-		// const stripeCustomer = await this.stripe.customers.search({
-		// 	query: `email:\'${user.email}\'`,
-		// });
-
-		// if (stripeCustomer.data.length !== 0) {
-		// 	let addressDefault = {} as UserAddressDto;
-		// 	for (const val of updateUserDto.address) {
-		// 		if (val.isDefault === true) {
-		// 			addressDefault = val;
-		// 			await this.stripe.customers.update(stripeCustomer.data[0].id, {
-		// 				email: user.email,
-		// 				name: user.username,
-		// 				address: {
-		// 					city: addressDefault?.province,
-		// 					district: addressDefault?.district,
-		// 					commune: addressDefault?.commune,
-		// 					detail: addressDefault?.addressDetail,
-		// 				},
-		// 				phone: updateUserDto?.phoneNumber,
-		// 				metadata: {
-		// 					gender: updateUserDto?.gender,
-		// 					firstName: updateUserDto?.firstName,
-		// 					lastName: updateUserDto?.lastName,
-		// 				},
-		// 			});
-		// 		}
-		// 	}
-		// }
 	}
 
 	async findOneByID(userID: string): Promise<User> {
@@ -176,20 +171,9 @@ export class UsersService {
 
 	async findUserById(filter: ListOptions<User>): Promise<User> {
 		try {
-			const objectID = new mongoose.Types.ObjectId(filter._id);
-			const user = await this.userModel.aggregate([
-				{ $match: { _id: objectID } },
-				{
-					$lookup: {
-						from: 'roles',
-						localField: 'roles',
-						foreignField: '_id',
-						as: 'roles',
-					},
-				},
-				{ $unwind: '$role' },
-			]);
-			return user[0];
+			return await this.userModel.findOne({
+				_id: filter._id,
+			});
 		} catch (error) {
 			throw new BadRequestException('An error occurred while retrieving users');
 		}
@@ -200,25 +184,26 @@ export class UsersService {
 		const limit = filter.limit || 10;
 		const offset = filter.offset || 0;
 
-		let input = {} as any;
 		const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
 
-		if (filter.search) {
-			input = {
-				...filter,
-				provinceApply: { $regex: rgx(filter.search), $options: 'i' },
-			};
-		} else {
-			input = filter;
+		const query: any = filter.search ? { ...filter, provinceApply: rgx(filter.search) } : { ...filter };
+
+
+		if(filter.roles && filter.roles.length){
+			query['roles']={ $in: filter.roles } 
 		}
-		console.log(input);
 
 		const result = await this.userModel
-			.find(input)
+			.find(query)
 			.sort(sortQuery)
 			.skip(offset)
 			.limit(limit)
-			.populate('roles');
+			.populate([
+				{
+					path: 'roles',
+					populate: 'permissions',
+				},
+			]);
 
 		return {
 			items: result,
@@ -396,6 +381,71 @@ export class UsersService {
 		if (!user) throw new NotFoundException('Not found user with that ID');
 
 		return true;
+	}
+
+	async updateProductFavorite(
+		userID: string,
+		dto: UpdateProductFavoriteDto,
+	): Promise<User> {
+		console.log('dto', dto);
+		const findUser = await this.getCurrentUser(userID);
+		if (findUser && findUser.products && findUser.products.length) {
+			const findProduct = findUser.products.filter(
+				(item) => item._id !== dto.product,
+			);
+			const findProductExits = findUser.products.filter(
+				(item) => item._id === dto.product,
+			);
+			console.log('findProduct in User', findProductExits);
+			// kiem tra san pham ton tai trong san pham o user khong?
+			if (findProductExits && findProductExits.length) {
+				// cap nhat lai san pham, bo san pham co id giong voi dto
+				const user = await this.userModel.findByIdAndUpdate(
+					userID,
+					{
+						products: findProduct.map((item) => item._id),
+					},
+					{
+						new: true,
+						runValidators: true,
+					},
+				);
+				if (!user) throw new NotFoundException('Not found user with that ID');
+				return user;
+			} else {
+				const user = await this.userModel.findByIdAndUpdate(
+					userID,
+					{
+						products: [
+							...findUser.products.map((item) => item._id),
+							dto.product,
+						],
+					},
+					{
+						new: true,
+						runValidators: true,
+					},
+				);
+				if (!user) throw new NotFoundException('Not found user with that ID');
+
+				return user;
+			}
+		} else {
+			console.log([dto]);
+			const user = await this.userModel.findByIdAndUpdate(
+				userID,
+				{
+					products: [dto.product],
+				},
+				{
+					new: true,
+					runValidators: true,
+				},
+			);
+			if (!user) throw new NotFoundException('Not found user with that ID');
+
+			return user;
+		}
 	}
 
 	async deleteMe(userID: string): Promise<boolean> {

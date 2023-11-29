@@ -5,7 +5,7 @@ export enum State {
 
 export enum Status {
 	PENDING = 'PENDING',
-	APPROVED = 'APPROVED',
+	ApprovedD = 'ApprovedD',
 	REJECTED = 'REJECTED',
 }
 

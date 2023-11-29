@@ -23,7 +23,7 @@ export class CreateCommentDto {
 
 	@ApiProperty({
 		enum: CommentStatus,
-		default: CommentStatus.Unapproved,
+		default: CommentStatus.UnApproved,
 		required: false,
 	})
 	@IsOptional()

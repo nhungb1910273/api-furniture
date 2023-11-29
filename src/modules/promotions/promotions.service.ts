@@ -2,15 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { ESortOrder } from 'src/shared/enum/sort.enum';
-import { SuccessResponse } from 'src/shared/response/success-response';
 import { ListOptions, ListResponse } from 'src/shared/response/common-response';
-import {
-	Promotion,
-	PromotionDocument,
-	PromotionType,
-} from './schemas/promotions.schema';
+import { SuccessResponse } from 'src/shared/response/success-response';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
+import { Promotion, PromotionDocument } from './schemas/promotions.schema';
 @Injectable()
 export class PromotionsService {
 	constructor(
@@ -28,12 +24,24 @@ export class PromotionsService {
 		filter: ListOptions<Promotion>,
 	): Promise<ListResponse<Promotion>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+			const query: any = filter.search ? { ...filter, name: rgx(filter.search) } : { ...filter };
+			if (filter.dateExpire) {
+				query['dateExpire'] = { $gt: new Date() }; // Adjust the condition based on your requirements
+			  }else if(filter.quantity === 0){
+				query['quantity'] = { $lt: 0 }; // Adjust the condition based on your requirements
+			  }else{
+				query['quantity'] = { $gt: 0 }; // Adjust the condition based on your requirements
+
+			  }
+		  
+
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.promotionModel
-				.find(filter)
+				.find(query)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit);

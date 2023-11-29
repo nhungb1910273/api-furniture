@@ -14,20 +14,31 @@ import { ReviewStatus } from '../schemas/reviews.shemas';
 export class CreateReviewDto {
 	@ApiProperty()
 	@IsOptional()
-	@IsNotEmpty()
 	@IsString()
+	@IsNotEmpty()
 	user: string;
 
 	@ApiProperty()
 	@IsOptional()
-	@IsNotEmpty()
 	@IsString()
+	@IsNotEmpty()
+	bill: string;
+
+	@ApiProperty()
+	@IsOptional()
+	@IsString()
+	@IsNotEmpty()
+	productSku: string;
+
+	@ApiProperty()
+	@IsOptional()
+	@IsString()
+	@IsNotEmpty()
 	product: string;
 
 	@ApiProperty()
 	@IsOptional()
 	@IsString()
-	@IsNotEmpty()
 	content: string;
 
 	@ApiProperty({ format: 'binary' })
@@ -44,7 +55,7 @@ export class CreateReviewDto {
 
 	@ApiProperty({
 		enum: ReviewStatus,
-		default: ReviewStatus.Unapproved,
+		default: ReviewStatus.UnApproved,
 		required: false,
 	})
 	@IsOptional()

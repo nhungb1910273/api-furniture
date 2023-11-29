@@ -86,15 +86,27 @@ export class BillItemsService {
 				const updateProductSku = await this.productSkuService.updateOne(
 					{
 						quantityInStock: findProductSku.quantityInStock - input.quantity,
-						quantitySold: findProductSku.quantityInStock + input.quantity,
+						quantitySold:
+							(findProductSku.quantitySold ? findProductSku.quantitySold : 0) +
+							input.quantity,
 					},
 					findProductSku._id,
 				);
+				console.log('findPK', updateProductSku);
+				const findPK = await this.productSkuService.findOne({
+					_id: updateProductSku._id,
+				});
 				if (updateProductSku) {
-					input.productSku = updateProductSku;
+					input.productSku = findPK;
+					input.product = findPK.product;
 					const name = (Math.random() + 1000000).toString(36).substring(7);
 					input.name = name;
-					return await this.billItemModel.create(input);
+					console.log('product', input);
+					const data = await this.billItemModel.create(input);
+					if (data) {
+						console.log('data', data);
+						return data;
+					}
 				} else {
 					throw new BadRequestException('Update Product Sku not success');
 				}

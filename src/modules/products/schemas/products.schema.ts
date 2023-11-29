@@ -1,16 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { appConfig } from 'src/app.config';
 import { Category } from 'src/modules/categories/schemas/categories.schema';
-import {
-	Review,
-	ReviewSchema,
-} from 'src/modules/reviews/schemas/reviews.shemas';
 import { RoomFurniture } from 'src/modules/room-furnitures/schemas/room-furnitures.schema';
-import {
-	OptionNull,
-	OptionNullSchema,
-} from 'src/modules/sku-values/schemas/option-null.schema';
 import { BaseObject } from 'src/shared/schemas/base-object.schema';
 
 export type ProductDocument = HydratedDocument<Product>;
@@ -41,10 +32,10 @@ export class Product extends BaseObject {
 	})
 	roomFurniture: RoomFurniture;
 
-	@Prop({
-		type: [{ type: OptionNullSchema, required: false }],
-	})
-	skuValues?: OptionNull[];
+	// @Prop({
+	// 	type: [{ type: OptionNullSchema, required: false, default: [] }],
+	// })
+	// skuValues?: OptionNull[];
 
 	@Prop({ type: String, require: true })
 	name: string;
@@ -55,10 +46,10 @@ export class Product extends BaseObject {
 	@Prop({ type: String, require: true })
 	content: string;
 
-	@Prop({ type: Number, require: false })
-	view?: number;
+	// @Prop({ type: Number, require: false })
+	// view?: number;
 
-	@Prop({ type: Number, require: false })
+	@Prop({ type: Number, require: false, default: 0 })
 	installationCost?: number;
 
 	@Prop({ type: Boolean, default: true })
@@ -67,19 +58,8 @@ export class Product extends BaseObject {
 	@Prop({ type: Boolean, default: false })
 	isHidden: boolean;
 
-	@Prop({ type: Boolean, default: false })
-	isFavorite: boolean;
-
-	@Prop({
-		type: [{ type: ReviewSchema, required: false }],
-		validate: {
-			validator: (reviews: any[]) =>
-				reviews.length <= parseInt(appConfig.maxElementEmbedd),
-			message: `Facility have ${appConfig.maxElementEmbedd} reviews latest`,
-		},
-		default: [],
-	})
-	reviews: Review[];
+	// @Prop({ type: Boolean, default: false })
+	// isFavorite: boolean;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

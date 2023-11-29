@@ -28,6 +28,7 @@ import { CartsModule } from './modules/carts/carts.module';
 import { DetailCartsModule } from './modules/detail-carts/detail-carts.module';
 import { BillItemsModule } from './modules/bill-items/bill-items.module';
 import { BillsModule } from './modules/bills/bills.module';
+// import * as paypal from 'paypal-rest-sdk';
 
 @Module({
 	imports: [
@@ -79,5 +80,10 @@ export class AppModule {
 
 	constructor() {
 		console.log({ appConfig });
+		// paypal.configure({
+		// 	mode: 'sandbox', // Change to 'live' for production
+		// 	client_id: appConfig.paypalPublicKey,
+		// 	client_secret: appConfig.paypalSecretKey,
+		// });
 	}
 }

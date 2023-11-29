@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	NotFoundException,
 	Param,
@@ -17,20 +18,17 @@ import {
 	ApiOkResponse,
 	ApiOperation,
 	ApiParam,
-	ApiResponse,
 	ApiTags,
 } from '@nestjs/swagger';
 import { ApiDocsPagination } from 'src/decorators/swagger-form-data.decorator';
-import { ESortOrder } from 'src/shared/enum/sort.enum';
-import { ListOptions, ListResponse } from 'src/shared/response/common-response';
+import { ListOptions } from 'src/shared/response/common-response';
 import { Public } from '../auth/decorators/public.decorator';
 import { CreateProviderDto } from './dto/create-provider.dto';
+import { UpdateProviderDto } from './dto/update-provider.dto';
 import { ProvidersService } from './providers.service';
 import { Provider } from './schemas/providers.schema';
-import { UpdateProviderDto } from './dto/update-provider.dto';
 
 @ApiTags('providers')
-// @ApiBearerAuth()
 @Controller('providers')
 export class ProvidersController {
 	constructor(private readonly providerService: ProvidersService) {}
@@ -65,40 +63,17 @@ export class ProvidersController {
 		description: '[Input] invalid',
 	})
 	getProviderById(@Param('id') id) {
-		return this.providerService.findOneById({ _id: id });
+		return this.providerService.findOne({
+			_id: id,
+		});
 	}
+
 	@Public()
 	@Get()
 	@ApiOperation({
 		summary: 'Get many Provider with many fields',
 	})
 	@ApiDocsPagination('Provider')
-	@ApiResponse({
-		status: 200,
-		schema: {
-			example: {
-				items: [
-					{
-						_id: '_id',
-						name: 'string',
-						address: {},
-						email: 'string',
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					},
-				] as Provider[],
-				total: 0,
-				options: {
-					limit: 10,
-					offset: 0,
-					searchField: 'string',
-					searchValue: 'string',
-					sortBy: 'name',
-					sortOrder: ESortOrder.ASC,
-				} as ListOptions<Provider>,
-			} as ListResponse<Provider>,
-		},
-	})
 	@ApiNotFoundResponse({
 		type: NotFoundException,
 		status: 404,
@@ -119,34 +94,6 @@ export class ProvidersController {
 		summary: 'Create a new Provider',
 	})
 	@ApiParam({ name: 'id', type: String, description: 'Provider ID' })
-	@ApiBody({
-		type: CreateProviderDto,
-		examples: {
-			example: {
-				value: {
-					name: 'Admin Provider',
-					address: {},
-					email: 'nhung@gmail.com',
-				} as CreateProviderDto,
-			},
-		},
-	})
-	@ApiCreatedResponse({
-		schema: {
-			example: {
-				code: 200,
-				message: 'Success',
-				data: {
-					_id: '1233456',
-					name: 'Admin Provider',
-					address: {},
-					email: 'nhung@gmail.com',
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				} as Provider,
-			},
-		},
-	})
 	@ApiBadRequestResponse({
 		type: BadRequestException,
 		status: 400,
@@ -160,21 +107,6 @@ export class ProvidersController {
 	@Patch(':id')
 	@ApiOperation({
 		summary: 'Update a Provider',
-	})
-	@ApiOkResponse({
-		// type: Provider,
-		status: 200,
-		schema: {
-			example: {
-				code: 200,
-				message: 'Success',
-				data: {
-					name: 'Provider',
-					place: 'Viet Nam',
-					email: 'Provider@test.com',
-				},
-			},
-		},
 	})
 	@ApiBadRequestResponse({
 		type: BadRequestException,
@@ -213,4 +145,18 @@ export class ProvidersController {
 	// deleteProvider(@Param() id: string) {
 	// 	return this.providerService.deleteOne(id);
 	// }
+
+	@Public()
+	@Delete()
+	@ApiOperation({
+		summary: 'Delete many Provider with many fields',
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	deleteMany() {
+		return this.providerService.deleteMany();
+	}
 }

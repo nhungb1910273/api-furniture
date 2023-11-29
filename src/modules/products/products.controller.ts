@@ -60,6 +60,32 @@ export class ProductsController {
 		return this.productService.findAllProduct(filter);
 	}
 
+	@Public()
+	@Get("sold-out")
+	@ApiOperation({
+		summary: 'Get many Product with many fields',
+	})
+	@ApiDocsPagination('Product')
+	@ApiQuery({
+		name: 'room',
+		type: String,
+		required: false,
+		example: '652abb7f6968b26f5db63545',
+	})
+	@ApiNotFoundResponse({
+		type: NotFoundException,
+		status: 404,
+		description: 'Product not found!',
+	})
+	@ApiBadRequestResponse({
+		type: BadRequestException,
+		status: 400,
+		description: '[Input] invalid!',
+	})
+	getProductsHaveFilterQuantity(@Query() filter: ListOptions<Product>) {
+		return this.productService.getProductsHaveFilterQuantity(filter)
+	}
+
 	// @Public()
 	// @Get()
 	// @ApiOperation({
@@ -156,30 +182,31 @@ export class ProductsController {
 		description: '[Input] invalid!',
 	})
 	updateProduct(@Param('id') id, @Body() input: UpdateProductDto) {
+		console.log(input, id);
 		return this.productService.updateProduct(input, id);
 	}
 
-	@Public()
-	@Patch('/update-favorite/:id')
-	@ApiOperation({
-		summary: 'Update a product',
-	})
-	@ApiParam({ name: 'id', type: String, description: 'product ID' })
-	@ApiBadRequestResponse({
-		type: BadRequestException,
-		status: 400,
-		description: '[Input] invalid!',
-	})
-	updateProductFavorite(@Param('id') id, @Body() input: UpdateProductDto) {
-		return this.productService.updateProduct(input, id);
-	}
+	// @Public()
+	// @Patch('update-favorite/:id')
+	// @ApiOperation({
+	// 	summary: 'Update a product',
+	// })
+	// @ApiParam({ name: 'id', type: String, description: 'product ID' })
+	// @ApiBadRequestResponse({
+	// 	type: BadRequestException,
+	// 	status: 400,
+	// 	description: '[Input] invalid!',
+	// })
+	// updateProductFavorite(@Param('id') id, @Body() input: UpdateProductDto) {
+	// 	return this.productService.updateProduct(input, id);
+	// }
 
 	@Public()
 	@Delete(':id')
 	@ApiOperation({
 		summary: 'Delete a Product',
 	})
-	@ApiParam({ name: 'id', type: String, description: 'Product ID' })
+	// @ApiParam({ name: 'id', type: String, description: 'Product ID' })
 	@ApiResponse({
 		schema: {
 			example: {
@@ -199,7 +226,7 @@ export class ProductsController {
 		status: 404,
 		description: 'Product not found!',
 	})
-	deleteProduct(@Param() id: string) {
+	deleteProduct(@Param('id') id) {
 		return this.productService.deleteOne(id);
 	}
 

@@ -20,7 +20,7 @@ export class CreateRoomFurnitureDto {
 
 	@ApiProperty({
 		enum: RoomFurnitureStatus,
-		default: RoomFurnitureStatus.ACTIVE,
+		default: RoomFurnitureStatus.Active,
 	})
 	@IsOptional()
 	status: RoomFurnitureStatus;

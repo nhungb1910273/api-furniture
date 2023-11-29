@@ -4,6 +4,7 @@ import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { CreateBillItemDto } from 'src/modules/bill-items/dto/create-bill-item.dto';
 import { UserAddressDto } from 'src/modules/users/dto/user-address.dto';
 import { BillPaymentMethod, BillStatus } from '../schemas/bills.schema';
+import { Promotion } from 'src/modules/promotions/schemas/promotions.schema';
 
 export class CreateBillDto {
 	@ApiProperty()
@@ -16,9 +17,8 @@ export class CreateBillDto {
 
 	@ApiProperty()
 	@IsOptional()
-	@Type(() => String)
 	// @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
-	promotion?: string;
+	promotion?: Promotion;
 
 	@ApiProperty()
 	@IsOptional()

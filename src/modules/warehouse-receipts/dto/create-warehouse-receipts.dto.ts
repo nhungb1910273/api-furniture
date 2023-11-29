@@ -17,9 +17,9 @@ export class CreateWarehouseReceiptDto {
 	@IsString()
 	provider: string;
 
-	@ApiProperty()
-	@IsOptional()
-	importDate: Date;
+	// @ApiProperty()
+	// @IsOptional()
+	// importDate: Date;
 
 	@ApiProperty({ required: false })
 	@IsOptional()
@@ -38,11 +38,11 @@ export class CreateWarehouseReceiptDto {
 	})
 	@Type(() => CreateWarehouseReceiptDetailDto)
 	@IsOptional()
-	warehouseReceiptDetails: CreateWarehouseReceiptDetailDto[];
+	warehouseReceiptDetails?: CreateWarehouseReceiptDetailDto[];
 
 	@ApiProperty({
 		enum: WRStatus,
-		default: WRStatus.Unapproved,
+		default: WRStatus.UnApproved,
 		required: false,
 	})
 	@IsOptional()

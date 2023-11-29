@@ -68,7 +68,7 @@ export class CreateBlogDto {
 
 	@ApiProperty({
 		enum: BlogStatus,
-		default: BlogStatus.Unapproved,
+		default: BlogStatus.UnApproved,
 		required: false,
 	})
 	@IsOptional()

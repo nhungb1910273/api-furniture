@@ -1,24 +1,31 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { PermissionStatus } from '../schemas/permissions.schema';
 
 export class CreatePermissionDto {
 	@ApiProperty()
+	@IsOptional()
 	@IsString()
 	name: string;
 
 	@ApiProperty()
+	@IsOptional()
+	@IsString()
+	code: string;
+
+	@ApiProperty()
+	@IsOptional()
 	@IsString()
 	description: string;
 
 	@ApiProperty()
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	groupPermission: string;
 
 	@ApiProperty({
 		enum: PermissionStatus,
-		default: PermissionStatus.ACTIVE,
+		default: PermissionStatus.Active,
 		required: false,
 	})
 	@IsOptional()

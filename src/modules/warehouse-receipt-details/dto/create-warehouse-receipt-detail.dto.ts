@@ -5,7 +5,6 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 export class CreateWarehouseReceiptDetailDto {
 	@ApiProperty()
 	@IsOptional()
-	@IsNotEmpty()
 	@IsString()
 	productSku: string;
 
@@ -20,4 +19,7 @@ export class CreateWarehouseReceiptDetailDto {
 	@IsNumber()
 	@Type(() => Number)
 	price: number;
+
+	@IsOptional()
+	name: string;
 }

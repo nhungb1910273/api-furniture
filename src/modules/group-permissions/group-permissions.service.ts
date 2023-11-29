@@ -8,6 +8,7 @@ import {
 	GroupPermissionDocument,
 } from '../group-permissions/schemas/group-permissions.schema';
 import { CreateGroupPermissionDto } from './dto/create-group-permission.dto';
+import { UpdateGroupPermissionDto } from './dto/update-group-permission.dto';
 
 @Injectable()
 export class GroupPermissionsService {
@@ -24,27 +25,6 @@ export class GroupPermissionsService {
 		filter: ListOptions<GroupPermission>,
 	): Promise<GroupPermission> {
 		try {
-			// const objectID = new mongoose.Types.ObjectId(filter._id);
-			// const groupPermission = await this.groupPermissionModel.aggregate([
-			// 	{ $match: { _id: objectID } },
-			// 	{
-			// 		$lookup: {
-			// 			from: 'permissions',
-			// 			localField: 'permissions',
-			// 			foreignField: '_id',
-			// 			as: 'permissionsObjects',
-			// 		},
-			// 	},
-			// 	{ $unwind: '$permissions' },
-			// 	{
-			// 		$group: {
-			// 			_id: '$_id',
-			// 			permissions: { $push: '$permissions' },
-			// 			permissionsObjects: { $push: '$permissionsObjects' },
-			// 		},
-			// 	},
-			// ]);
-			// return groupPermission[0];
 			const data = await this.groupPermissionModel
 				.findById({
 					_id: filter._id,
@@ -54,7 +34,7 @@ export class GroupPermissionsService {
 			return data;
 		} catch (error) {
 			throw new BadRequestException(
-				'An error occurred while retrieving Categorys',
+				'An error occurred while retrieving Group Permission',
 			);
 		}
 	}
@@ -63,12 +43,13 @@ export class GroupPermissionsService {
 		filter: ListOptions<GroupPermission>,
 	): Promise<ListResponse<GroupPermission>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.groupPermissionModel
-				.find(filter)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)
@@ -95,7 +76,7 @@ export class GroupPermissionsService {
 			}
 			throw new BadRequestException('Group Permission has existed!');
 		} catch (err) {
-			return err;
+			throw new BadRequestException(err);
 		}
 	}
 
@@ -108,4 +89,18 @@ export class GroupPermissionsService {
 	// 		);
 	// 	}
 	// }
+
+	async updateOne(
+		input: UpdateGroupPermissionDto,
+		id: string,
+	): Promise<GroupPermission> {
+		try {
+			return await this.groupPermissionModel.findByIdAndUpdate(id, input, {
+				new: true,
+				runValidators: true,
+			});
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
 }

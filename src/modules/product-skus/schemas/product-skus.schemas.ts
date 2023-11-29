@@ -1,11 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
+import { OptionValue } from 'src/modules/option-values/schemas/option-values.schemas';
 import { Photo, PhotoSchema } from 'src/modules/photos/schemas/photo.schema';
 import { Product } from 'src/modules/products/schemas/products.schema';
-import {
-	SkuValue,
-	SkuValueSchema,
-} from 'src/modules/sku-values/schemas/sku-values.schemas';
+import { Review } from 'src/modules/reviews/schemas/reviews.shemas';
 import { BaseObject } from 'src/shared/schemas/base-object.schema';
 
 export type ProductSkuDocument = HydratedDocument<ProductSku>;
@@ -48,10 +46,32 @@ export class ProductSku extends BaseObject {
 	})
 	photos: Photo[];
 
-	@Prop({
-		type: [{ type: SkuValueSchema }],
-	})
-	skuValues: SkuValue[];
+	// @Prop({
+	// 	type: [{ type: SkuValueSchema }],
+	// })
+	// skuValues: SkuValue[];
+	@Prop([
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'OptionValue',
+			required: true,
+		},
+	])
+	optionValues: OptionValue[];
+
+	// @Prop({
+	// 	type: [{ type: ReviewSchema, required: false }],
+	// 	default: [],
+	// })
+	// reviews?: Review[];
+	@Prop([
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Review',
+			required: true,
+		},
+	])
+	reviews: Review[];
 
 	// gồm < 3 object option: color, size, ....
 }

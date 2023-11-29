@@ -78,7 +78,7 @@ export class AuthService {
 
 		if (!isMatched) throw new BadRequestException('Password not correct');
 
-		const tokens = await this.signTokens(user._id, user.firstName);
+		const tokens = await this.signTokens(user._id, user.userType);
 		await this.updateRefreshTokenHashed(user._id, tokens.refreshToken);
 
 		return tokens;

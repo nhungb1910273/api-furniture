@@ -19,7 +19,6 @@ export class CreateProviderDto {
 	phoneNumber: string;
 
 	@IsOptional()
-	@IsString()
 	address: CreateAddressDto;
 
 	@IsOptional()

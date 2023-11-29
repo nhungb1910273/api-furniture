@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ProductSku } from 'src/modules/product-skus/schemas/product-skus.schemas';
+import { Product } from 'src/modules/products/schemas/products.schema';
 
 export class CreateBillItemDto {
 	@IsNotEmpty()
@@ -28,4 +29,8 @@ export class CreateBillItemDto {
 	@IsOptional()
 	@Type(() => ProductSku)
 	productSku?: ProductSku;
+
+	@IsOptional()
+	@Type(() => Product)
+	product?: Product;
 }

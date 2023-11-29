@@ -31,18 +31,13 @@ export class ShippingsService {
 			const offset = filter.offset || 0;
 
 			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
-			let input = {} as any;
-			if (filter.search) {
-				input = {
-					...filter,
-					provinceApply: { $regex: rgx(filter.search), $options: 'i' },
-				};
-			} else {
-				input = filter;
-			}
 
 			const result = await this.shippingModel
-				.find(input)
+				.find(
+					filter.search
+						? { ...filter, provinceApply: rgx(filter.search) }
+						: filter,
+				)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit);

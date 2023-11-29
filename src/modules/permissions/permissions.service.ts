@@ -8,6 +8,7 @@ import { Permission, PermissionDocument } from './schemas/permissions.schema';
 // import { ESortOrder } from 'src/shared/enum/sort.enum';
 import { ListOptions, ListResponse } from 'src/shared/response/common-response';
 import { CreatePermissionDto } from './dto/create-permission.dto';
+import { UpdatePermissionDto } from './dto/update-permission.dto';
 
 @Injectable()
 export class PermissionsService {
@@ -33,40 +34,34 @@ export class PermissionsService {
 		}
 	}
 
+	async findOneByCode(filter: ListOptions<Permission>): Promise<Permission> {
+		try {
+			const permission = await this.permissionModel.findOne({
+				code: filter.code,
+			});
+			if (permission) {
+				await permission.populate('groupPermission');
+				return permission;
+			}
+			throw new BadRequestException(filter.code);
+		} catch (error) {
+			throw new BadRequestException(
+				'An error occurred while retrieving Permission',
+			);
+		}
+	}
+
 	async findAll(
-		// filter: DefaultListDto,
 		filter: ListOptions<Permission>,
 	): Promise<ListResponse<Permission>> {
-		// const { limit, offset, sortBy, sortOrder, ...condition } = filter;
 		try {
-			// const where = {};
-			// if (condition?.searchField && condition?.searchValue) {
-			// 	where[condition.searchField] = `/.*%${condition.searchValue}*./`;
-			// }
-			// console.log(where);
-
-			// const sortQuery = {};
-			// sortQuery[sortBy] = sortOrder === ESortOrder.ASC ? 1 : -1;
-			// const limitT = limit || 10;
-			// const offsetT = offset || 0;
-			// const result = await this.permissionModel
-			// 	.find({ filter, where })
-			// 	.sort(sortQuery)
-			// 	.skip(offsetT)
-			// 	.limit(limitT)
-			// 	.populate('rolePermissions');
-
-			// return {
-			// 	data: result,
-			// 	total: result?.length,
-			// 	filter: filter,
-			// };
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === 'asc' ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.permissionModel
-				.find(filter)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)
@@ -85,7 +80,7 @@ export class PermissionsService {
 	async create(input: CreatePermissionDto): Promise<Permission> {
 		try {
 			const permission = await this.permissionModel.findOne({
-				name: input.name,
+				code: input.code,
 			});
 			if (!permission) {
 				if (input.groupPermission) {
@@ -105,11 +100,34 @@ export class PermissionsService {
 		}
 	}
 
-	// async getPermissionWithGroup() {
-	// 	try {
-	// 		return await this.groupPermissionService.getAllGroupPermission();
-	// 	} catch (err) {
-	// 		throw new BadRequestException(err);
-	// 	}
-	// }
+	async updateOne(input: UpdatePermissionDto, id: string): Promise<Permission> {
+		try {
+			console.log('dfasdfds', input);
+			return await this.permissionModel.findByIdAndUpdate(id, input, {
+				new: true,
+				runValidators: true,
+			});
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
+
+	async updateStatusPermission(
+		input: UpdatePermissionDto,
+		id: string,
+	): Promise<Permission> {
+		try {
+			return await this.permissionModel.findByIdAndUpdate(
+				id,
+				{
+					status: input.status,
+				},
+				{
+					new: true,
+				},
+			);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
 }

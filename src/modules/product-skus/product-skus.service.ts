@@ -8,8 +8,10 @@ import { Model, isValidObjectId } from 'mongoose';
 import { ESortOrder } from 'src/shared/enum/sort.enum';
 import { ListOptions, ListResponse } from 'src/shared/response/common-response';
 import { SuccessResponse } from 'src/shared/response/success-response';
+import { OptionValuesService } from '../option-values/option-values.service';
 import { PhotoService } from '../photos/photo.service';
-import { ProductsService } from '../products/products.service';
+import { CreateReviewDto } from '../reviews/dto/create-review.dto';
+import { ReviewsService } from '../reviews/reviews.service';
 import { SkuValuesService } from '../sku-values/sku-values.service';
 import { CreateProductSkuDto } from './dto/create-product-sku.dto';
 import { UpdateProductSkuDto } from './dto/update-product-sku.dto';
@@ -21,28 +23,27 @@ export class ProductSkusService {
 		private productSkuModel: Model<ProductSkuDocument>,
 		private photoService: PhotoService,
 		private skuValueService: SkuValuesService,
+		private reviewService: ReviewsService,
+		private optionValueService: OptionValuesService,
 	) {}
 
 	async findOne(filter: Partial<ProductSku>): Promise<ProductSku> {
 		try {
-			// const objectID = new mongoose.Types.ObjectId(filter._id);
-			// const category = await this.productSkuModel.aggregate([
-			// 	{ $match: { _id: objectID } },
-			// 	{
-			// 		$lookup: {
-			// 			from: 'skuValues',
-			// 			localField: 'skuValues',
-			// 			foreignField: '_id',
-			// 			as: 'skuValues',
-			// 		},
-			// 	},
-			// ]);
-			// return category[0];
 			return await this.productSkuModel
 				.findOne({
 					_id: filter._id,
 				})
-				.populate(['skuValues', 'product']);
+				.populate([
+					{
+						path: 'optionValues',
+						populate: { path: 'optionSku' }, // Populate the 'user' field in each comment
+					},
+					'product',
+					{
+						path: 'reviews',
+						populate: ['bill', 'user'],
+					},
+				]);
 		} catch (error) {
 			throw new BadRequestException(
 				'An error occurred while retrieving Options',
@@ -52,19 +53,6 @@ export class ProductSkusService {
 
 	async findOneByOne(filter: Partial<ProductSku>): Promise<ProductSku> {
 		try {
-			// const objectID = new mongoose.Types.ObjectId(filter._id);
-			// const category = await this.productSkuModel.aggregate([
-			// 	{ $match: { _id: objectID } },
-			// 	{
-			// 		$lookup: {
-			// 			from: 'skuValues',
-			// 			localField: 'skuValues',
-			// 			foreignField: '_id',
-			// 			as: 'skuValues',
-			// 		},
-			// 	},
-			// ]);
-			// return category[0];
 			return await this.productSkuModel.findOne({
 				_id: filter._id,
 			});
@@ -77,24 +65,21 @@ export class ProductSkusService {
 
 	async findOneByNumberSku(filter: Partial<ProductSku>): Promise<ProductSku> {
 		try {
-			// const objectID = new mongoose.Types.ObjectId(filter._id);
-			// const category = await this.productSkuModel.aggregate([
-			// 	{ $match: { _id: objectID } },
-			// 	{
-			// 		$lookup: {
-			// 			from: 'skuValues',
-			// 			localField: 'skuValues',
-			// 			foreignField: '_id',
-			// 			as: 'skuValues',
-			// 		},
-			// 	},
-			// ]);
-			// return category[0];
 			return await this.productSkuModel
 				.findOne({
 					numberSKU: filter.numberSKU,
 				})
-				.populate(['skuValues', 'product']);
+				.populate([
+					{
+						path: 'optionValues',
+						populate: { path: 'optionSku' }, // Populate the 'user' field in each comment
+					},
+					'product',
+					{
+						path: 'reviews',
+						populate: ['bill', 'user'],
+					},
+				]);
 		} catch (error) {
 			throw new BadRequestException(
 				'An error occurred while retrieving Options',
@@ -116,7 +101,17 @@ export class ProductSkusService {
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)
-				.populate(['skuValues', 'product']);
+				.populate([
+					{
+						path: 'optionValues',
+						populate: { path: 'optionSku' }, // Populate the 'user' field in each comment
+					},
+					'product',
+					{
+						path: 'reviews',
+						populate: ['bill', 'user'],
+					},
+				]);
 
 			return {
 				items: result,
@@ -143,7 +138,17 @@ export class ProductSkusService {
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)
-				.populate(['skuValues', 'product']);
+				.populate([
+					{
+						path: 'optionValues',
+						populate: { path: 'optionSku' }, // Populate the 'user' field in each comment
+					},
+					'product',
+					{
+						path: 'reviews',
+						populate: ['bill', 'user'],
+					},
+				]);
 
 			return {
 				items: result,
@@ -161,47 +166,125 @@ export class ProductSkusService {
 		files?: { photos?: Express.Multer.File[] },
 	): Promise<ProductSku> {
 		try {
+			console.log('input', files, input);
 			const findProductSku = await this.productSkuModel.findOne({
 				numberSKU: input.numberSKU,
 			});
 			if (!findProductSku) {
-				// console.log('findProduct', findProduct);
+				const optionValuesIDs = [];
+				if (input.optionValues && input.optionValues.length) {
+					for (const optionValueID of input.optionValues) {
+						const fintOptionValue = await this.optionValueService.findOne({
+							_id: optionValueID,
+						});
+						if (!fintOptionValue) {
+							throw new BadRequestException('Option Value not found');
+						}
+						optionValuesIDs.push(fintOptionValue._id);
+					}
+					input.optionValues = optionValuesIDs;
 
-				input.product = input.product;
-
-				if (input.skuValues && input.skuValues.length > 0) {
-					const createSkuValues = await this.skuValueService.createMany(
-						input.skuValues,
-					);
-					if (createSkuValues) {
-						const createProductSku = await this.productSkuModel.create(input);
-						createProductSku.skuValues = createSkuValues.items;
-
-						if (files.photos && files) {
-							const createPhotos = await this.photoService.uploadManyFile(
-								files,
+					const createProductSku = await this.productSkuModel.create(input);
+					if (files.photos && files) {
+						const createPhotos = await this.photoService.uploadManyFile(
+							files,
+							createProductSku._id,
+						);
+						if (createPhotos.total !== 0) {
+							createProductSku.photos = createPhotos.items;
+						} else {
+							await this.productSkuModel.findByIdAndRemove(
 								createProductSku._id,
 							);
-							if (createPhotos.total !== 0) {
-								createProductSku.photos = createPhotos.items;
-							} else {
-								await this.productSkuModel.findByIdAndRemove(
-									createProductSku._id,
-								);
-								throw new BadRequestException('Photo not successfully!');
-							}
+							throw new BadRequestException('Photo not successfully!');
 						}
-
-						return await createProductSku.save();
 					}
+					console.log('create', createProductSku);
+
+					return await createProductSku.save();
 				} else {
-					throw new BadRequestException('Product sku not successfully!');
+					throw new BadRequestException('Photos not found!');
 				}
+
+				// if (input.skuValues && input.skuValues.length > 0) {
+				// 	const createSkuValues = await this.skuValueService.createMany(
+				// 		input.skuValues,
+				// 	);
+				// 	if (createSkuValues) {
+				// 		const createProductSku = await this.productSkuModel.create(input);
+				// 		createProductSku.skuValues = createSkuValues.items;
+
+				// 		if (files.photos && files) {
+				// 			const createPhotos = await this.photoService.uploadManyFile(
+				// 				files,
+				// 				createProductSku._id,
+				// 			);
+				// 			if (createPhotos.total !== 0) {
+				// 				createProductSku.photos = createPhotos.items;
+				// 			} else {
+				// 				await this.productSkuModel.findByIdAndRemove(
+				// 					createProductSku._id,
+				// 				);
+				// 				throw new BadRequestException('Photo not successfully!');
+				// 			}
+				// 		}
+
+				// 		return await createProductSku.save();
+				// 	}
+				// } else {
+				// 	throw new BadRequestException('Product sku not successfully!');
+				// }
 			}
 			throw new BadRequestException('Product sku has existed!');
 		} catch (err) {
-			return err;
+			throw new BadRequestException(err);
 		}
+	}
+
+	async addReview(
+		id: string,
+		reviewDto: CreateReviewDto,
+		files?: { photos?: Express.Multer.File[] },
+	): Promise<ProductSku> {
+		const createdReview = await this.reviewService.create(reviewDto, files);
+
+		const averageStar = await this.reviewService.caculateAverageRating(id);
+
+		const findProductSku = await this.findOne({
+			_id: id,
+		});
+		if (
+			findProductSku &&
+			findProductSku.reviews &&
+			findProductSku.reviews.length > 0
+		) {
+			return this.productSkuModel.findOneAndUpdate(
+				{ _id: id },
+				{
+					reviews: [
+						...findProductSku.reviews.map((item) => item._id),
+						createdReview._id,
+					],
+				},
+				// 	$set: {
+				// 		averageStar: averageStar,
+				// 	},
+				// },
+				{ new: true },
+			);
+		}
+		return this.productSkuModel.findOneAndUpdate(
+			{ _id: id },
+			// {
+			{
+				reviews: createdReview._id,
+			},
+			// $set: {
+			// 	averageStar: averageStar,
+			// },
+			// },
+			{ new: true },
+		);
 	}
 
 	async updateOne(
@@ -210,14 +293,14 @@ export class ProductSkusService {
 		files?: { photoUpdates?: Express.Multer.File[] },
 	): Promise<ProductSku> {
 		try {
-			console.log(files);
+			console.log(files, input);
 			// const findPhoto = await this.photoService.findAll({});
 			const findPhoto = await this.productSkuModel.findOne({
 				_id: id,
 			});
 			if (findPhoto && input.photos) {
 				for (const val of input.photos) {
-					const arr = findPhoto.photos.filter((item) => item._id === val._id);
+					const arr = findPhoto.photos.filter((item) => item._id !== val._id);
 					if (arr.length) {
 						await this.photoService.delete(val._id);
 					}
@@ -237,8 +320,18 @@ export class ProductSkusService {
 					new: true,
 				},
 			);
-			if (!productDetail) throw new NotFoundException('Product not found');
-			return productDetail;
+			if (productDetail) {
+				// const findPKs = await this.findAllByProduct(
+				// 	{},
+				// 	productDetail.product.toString(),
+				// );
+				// findPKs.items.forEach((val)=> {
+				// 	const data = val.optionValues.filter((item)=> item._id === )
+				// })
+				return productDetail;
+			} else {
+				throw new NotFoundException('Product not found');
+			}
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -247,12 +340,12 @@ export class ProductSkusService {
 	async deleteOneByProduct({ id }: any): Promise<SuccessResponse<ProductSku>> {
 		try {
 			if (!isValidObjectId(id)) throw new BadRequestException('ID invalid!');
-			const find = await this.productSkuModel.findOne({
-				_id: id,
-			});
-			for (const val of find.skuValues) {
-				await this.skuValueService.deleteOne(val._id.toString());
-			}
+			// const find = await this.productSkuModel.findOne({
+			// 	_id: id,
+			// });
+			// for (const val of find.skuValues) {
+			// 	await this.skuValueService.deleteOne(val._id.toString());
+			// }
 			await this.productSkuModel.findOneAndRemove({
 				productSku: id,
 			});
@@ -263,26 +356,12 @@ export class ProductSkusService {
 		}
 	}
 
-	async deleteOne(id: string): Promise<SuccessResponse<ProductSku>> {
-		try {
-			console.log('delete product sku', id);
-			// if (!isValidObjectId(id))
-			// 	throw new BadRequestException('ID invalid Product sku!');
-			const find = await this.productSkuModel.findOne({
-				_id: id,
-			});
-			for (const val of find.skuValues) {
-				console.log(val);
-				await this.skuValueService.deleteOne(val._id.toString());
-			}
-			await this.productSkuModel.findOneAndRemove({
-				_id: id,
-			});
-
-			return;
-		} catch (err) {
-			throw new BadRequestException(err);
+	async deleteOne(id: string): Promise<string> {
+		const productSku = await this.productSkuModel.findByIdAndDelete(id);
+		if (!productSku) {
+			throw new NotFoundException('ProductSku not found');
 		}
+		return 'Delete ProductSku successful';
 	}
 	async deleteMany(): Promise<SuccessResponse<ProductSku>> {
 		try {

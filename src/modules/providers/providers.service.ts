@@ -14,23 +14,21 @@ export class ProvidersService {
 		private providerModel: Model<ProviderDocument>,
 	) {}
 
-	// async findOne(filter: Partial<Provider>): Promise<Provider> {
-	// 	return this.providerModel.findOne(filter);
-	// }
-	async findOneById(filter: Partial<Provider>): Promise<Provider> {
-		console.log(filter);
+	async findOne(filter: Partial<Provider>): Promise<Provider> {
 		return this.providerModel.findOne(filter);
 	}
+
 	async findAll(
 		filter: ListOptions<Provider>,
 	): Promise<ListResponse<Provider>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.providerModel
-				.find(filter)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit);
@@ -50,6 +48,7 @@ export class ProvidersService {
 		try {
 			const provider = await this.providerModel.findOne({
 				email: input.email,
+				phoneNumber: input.phoneNumber,
 			});
 			if (!provider) {
 				return await this.providerModel.create(input);
@@ -60,54 +59,17 @@ export class ProvidersService {
 		}
 	}
 
-	// async createOne(input: CreateProviderDto): Promise<Provider> {
-	// 	try {
-	// 		const user = await this.providerModel.findOne({
-	// 			name: input.name,
-	// 			description: input.description,
-	// 		});
-	// 		if (!user) {
-	// 			return this.providerModel.create(input);
-	// 		}
-	// 		throw new BadRequestException('Email has existed!');
-	// 	} catch (err) {
-	// 		return err;
-	// 	}
-	// }
-
-	async updateOne(
-		input: UpdateProviderDto,
-		filter: Partial<Provider>,
-	): Promise<Provider> {
+	async updateOne(input: UpdateProviderDto, id: string): Promise<Provider> {
 		try {
-			const findProvider = await this.findOneById({
-				_id: filter._id,
-			});
-			if (input.name) {
-				input.name = findProvider.name;
-			}
-
-			if (input.email) {
-				input.email = findProvider.email;
-			}
-			if (input.phoneNumber) {
-				input.phoneNumber = findProvider.phoneNumber;
-			}
-			if (input.status) {
-				input.status = findProvider.status;
-			}
-			if (
-				input.name ||
-				input.address ||
-				input.phoneNumber ||
-				input.email ||
-				input.status
-			) {
-				return await this.providerModel.findByIdAndUpdate(filter._id, input, {
+			return await this.providerModel.findByIdAndUpdate(
+				{
+					_id: id,
+				},
+				input,
+				{
 					new: true,
-				});
-			}
-			throw new BadRequestException('Data invalid!');
+				},
+			);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -121,6 +83,15 @@ export class ProvidersService {
 				_id: id,
 			});
 
+			return;
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
+
+	async deleteMany(): Promise<SuccessResponse<Provider>> {
+		try {
+			await this.providerModel.deleteMany();
 			return;
 		} catch (err) {
 			throw new BadRequestException(err);

@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Photo } from 'src/modules/photos/schemas/photo.schema';
-import { CreateSkuValueDto } from 'src/modules/sku-values/dto/create-sku-value.dto';
 
 export class CreateProductSkuDto {
 	@ApiProperty()
@@ -53,12 +52,14 @@ export class CreateProductSkuDto {
 	content: string;
 
 	@ApiProperty({ format: 'binary' })
+	@IsOptional()
 	@Transform(({ value }) => JSON.parse(value))
 	photos: Photo[];
 
-	@ApiProperty({ type: CreateSkuValueDto, isArray: true })
-	// @Type(() => CreateSkuValueDto)
-	// @ValidateNested({ each: true })
-	@Transform(({ value }) => JSON.parse(value))
-	skuValues: CreateSkuValueDto[];
+	@ApiProperty()
+	@IsOptional()
+	// @IsNotEmpty()
+	@Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+	// @IsArray()
+	optionValues: string[];
 }

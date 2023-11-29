@@ -44,7 +44,9 @@ export class CartsController {
 		description: 'Cart not found!',
 	})
 	getCartByUser(@Param('userId') userId) {
-		return this.cartService.getOneByID(userId);
+		return this.cartService.findOne({
+			user: userId,
+		});
 	}
 
 	@Public()

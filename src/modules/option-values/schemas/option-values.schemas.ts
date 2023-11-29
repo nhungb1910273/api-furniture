@@ -21,7 +21,7 @@ export class OptionValue extends BaseObject {
 	name: string;
 	// red, black, 18'', 19''
 
-	@Prop({ type: PhotoSchema, require: true })
+	@Prop({ type: PhotoSchema, require: false })
 	photo: Photo;
 }
 

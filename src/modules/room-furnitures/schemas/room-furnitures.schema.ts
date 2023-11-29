@@ -1,14 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { BaseObject } from 'src/shared/schemas/base-object.schema';
 import { Photo, PhotoSchema } from 'src/modules/photos/schemas/photo.schema';
-import { appConfig } from 'src/app.config';
+import { BaseObject } from 'src/shared/schemas/base-object.schema';
 
 export type RoomFurnitureDocument = HydratedDocument<RoomFurniture>;
 
 export enum RoomFurnitureStatus {
-	ACTIVE = 'ACTIVE',
-	INACTIVE = 'INACTIVE',
+	Active = 'Active',
+	Inactive = 'Inactive',
 }
 
 @Schema({
@@ -36,7 +35,7 @@ export class RoomFurniture extends BaseObject {
 
 	@Prop({
 		enum: RoomFurnitureStatus,
-		default: RoomFurnitureStatus.ACTIVE,
+		default: RoomFurnitureStatus.Active,
 		type: String,
 	})
 	status: RoomFurnitureStatus;

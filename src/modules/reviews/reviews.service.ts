@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ESortOrder } from 'src/shared/enum/sort.enum';
@@ -6,19 +10,29 @@ import { ListOptions, ListResponse } from 'src/shared/response/common-response';
 import { PhotoService } from '../photos/photo.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Review, ReviewDocument } from './schemas/reviews.shemas';
-import { ProductsService } from '../products/products.service';
+import { UpdateReviewDto } from './dto/update-review.dto';
 @Injectable()
 export class ReviewsService {
 	constructor(
 		@InjectModel(Review.name)
 		private reviewModel: Model<ReviewDocument>,
-		private readonly photoService: PhotoService,
-		private readonly productService: ProductsService,
+		private readonly photoService: PhotoService, // private readonly productSkuService: ProductSkusService,
 	) {}
 
 	async findOne(filter: Partial<Review>): Promise<Review> {
 		try {
-			return await this.reviewModel.findOne(filter);
+			return await this.reviewModel.findOne(filter).populate([
+				'user',
+				{
+					path: 'productSku',
+					populate: [
+						{ path: 'product' },
+						{ path: 'optionValues', populate: { path: 'optionSku' } },
+					],
+				},
+				'product',
+				'bill',
+			]);
 		} catch (error) {
 			throw new BadRequestException(
 				'An error occurred while retrieving Reviews',
@@ -28,16 +42,29 @@ export class ReviewsService {
 
 	async findAll(filter: ListOptions<Review>): Promise<ListResponse<Review>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.reviewModel
-				.find(filter)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)
-				.populate(['user', 'product']);
+				.populate([
+					'user',
+					{
+						path: 'productSku',
+						populate: [
+							{ path: 'product' },
+							{ path: 'optionValues', populate: { path: 'optionSku' } },
+						],
+					},
+					'product',
+					'bill',
+				]);
 
 			return {
 				items: result,
@@ -50,81 +77,99 @@ export class ReviewsService {
 			);
 		}
 	}
+
+	async calculateAverageRating(filter: ListOptions<Review>): Promise<number> {
+		const reviews = await this.reviewModel.find(filter).exec();
+
+		if (!reviews || reviews.length === 0) {
+			return 0; // Return 0 if there are no reviews
+		}
+
+		const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+		const averageRating = totalRating / reviews.length;
+
+		return averageRating;
+	}
+
 	async create(
 		input: CreateReviewDto,
 		files?: { photos?: Express.Multer.File[] },
 	): Promise<Review> {
 		try {
-			const product = await this.productService.findOne({
-				_id: input.product,
-			});
-			if (!product) {
-				input.product = product._id;
-				const createReview = await this.reviewModel.create(input);
-				if (files.photos && files) {
-					try {
-						const createPhotos = await this.photoService.uploadManyFile(
-							files,
-							createReview._id,
-						);
-						createReview.photos = createPhotos.items;
-						await createReview.save();
-					} catch (error) {
-						createReview.delete();
-						throw new BadRequestException('Review creation failed');
-					}
+			console.log(input);
+			const createReview = await this.reviewModel.create(input);
+			if (files.photos && files) {
+				try {
+					const createPhotos = await this.photoService.uploadManyFile(
+						files,
+						createReview._id,
+					);
+					createReview.photos = createPhotos.items;
+					await createReview.save();
+				} catch (error) {
+					createReview.delete();
+					throw new BadRequestException('Review creation failed');
 				}
-				return createReview;
 			}
-			throw new BadRequestException('Product has existed!');
+			console.log('createdReview', createReview);
+			return createReview;
 		} catch (err) {
-			return err;
+			throw new BadRequestException(err);
 		}
 	}
 
-	// async createOne(input: CreateReviewDto): Promise<Review> {
-	// 	try {
-	// 		const user = await this.reviewModel.findOne({
-	// 			name: input.name,
-	// 			description: input.description,
-	// 		});
-	// 		if (!user) {
-	// 			return this.reviewModel.create(input);
-	// 		}
-	// 		throw new BadRequestException('Email has existed!');
-	// 	} catch (err) {
-	// 		return err;
-	// 	}
-	// }
+	async updateOne(
+		id: string,
+		input: UpdateReviewDto,
+		files?: { photoUpdates?: Express.Multer.File[] },
+	): Promise<Review> {
+		try {
+			const findPhoto = await this.reviewModel.findOne({
+				_id: id,
+			});
+			if (findPhoto && input.photos) {
+				for (const val of input.photos) {
+					const arr = findPhoto.photos.filter((item) => item._id !== val._id);
+					if (arr.length) {
+						await this.photoService.delete(val._id);
+					}
+				}
+			}
+			if (files && files.photoUpdates) {
+				const createPhotos = await this.photoService.uploadManyFile(files, id);
+				// console.log('createPhotos', createPhotos);
+				if (createPhotos.total !== 0) {
+					input.photos = [...input.photos, ...createPhotos.items];
+				}
+			}
+			const updateReview = await this.reviewModel.findByIdAndUpdate(id, input, {
+				new: true,
+				runValidators: true,
+			});
+			if (!updateReview) throw new NotFoundException('Product not found');
+			return updateReview;
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
 
-	// async updateOne(input: UpdateReviewDto, filter: Partial<Review>): Promise<Review> {
-	// 	const { name, place, email } = input;
-
-	// 	try {
-	// 		if (name || place || email) {
-	// 			return await this.reviewModel.findByIdAndUpdate(filter._id, input, {
-	// 				new: true,
-	// 			});
-	// 		}
-	// 		throw new BadRequestException('Data invalid!');
-	// 	} catch (err) {
-	// 		throw new BadRequestException(err);
-	// 	}
-	// }
-
-	// async deleteOne({ id }: any): Promise<SuccessResponse<Review>> {
-	// 	try {
-	// 		if (!isValidObjectId(id)) throw new BadRequestException('ID invalid!');
-
-	// 		await this.reviewModel.findOneAndRemove({
-	// 			_id: id,
-	// 		});
-
-	// 		return;
-	// 	} catch (err) {
-	// 		throw new BadRequestException(err);
-	// 	}
-	// }
+	async updateStatus(input: UpdateReviewDto, id: string): Promise<Review> {
+		try {
+			const updateBlog = await this.reviewModel.findOneAndUpdate(
+				{ _id: id },
+				{
+					status: input.status,
+				},
+				{
+					new: true,
+				},
+			);
+			if (!updateBlog) throw new NotFoundException('Product not found');
+			return updateBlog;
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
 
 	async delete(id: string): Promise<Review> {
 		const deletedReview = await this.reviewModel.findOneAndDelete({ _id: id });

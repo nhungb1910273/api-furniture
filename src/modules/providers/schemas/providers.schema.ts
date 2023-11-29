@@ -6,8 +6,8 @@ import { UserAddress } from 'src/modules/users/schemas/user-address.schema';
 export type ProviderDocument = HydratedDocument<Provider>;
 
 export enum ProviderStatus {
-	ACTIVE = 'ACTIVE',
-	INACTIVE = 'INACTIVE',
+	Active = 'Active',
+	Inactive = 'Inactive',
 }
 @Schema({ timestamps: true })
 export class Provider extends BaseObject {
@@ -34,7 +34,7 @@ export class Provider extends BaseObject {
 	@Prop({ type: UserAddress })
 	address?: UserAddress;
 
-	@Prop({ default: ProviderStatus.ACTIVE, enum: ProviderStatus, type: String })
+	@Prop({ default: ProviderStatus.Active, enum: ProviderStatus, type: String })
 	status: ProviderStatus;
 }
 

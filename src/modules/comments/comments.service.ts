@@ -3,21 +3,23 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ESortOrder } from 'src/shared/enum/sort.enum';
 import { ListOptions, ListResponse } from 'src/shared/response/common-response';
-import { BlogsService } from '../blogs/blogs.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { Comment, CommentDocument } from './schemas/comments.schemas';
+import {
+	Comment,
+	CommentDocument,
+	CommentStatus,
+} from './schemas/comments.schemas';
 @Injectable()
 export class CommentsService {
 	constructor(
 		@InjectModel(Comment.name)
 		private commentModel: Model<CommentDocument>,
-		private readonly blogService: BlogsService,
 	) {}
 
 	async findOne(filter: Partial<Comment>): Promise<Comment> {
 		try {
-			return await this.commentModel.findOne(filter);
+			return await this.commentModel.findOne(filter).populate(['blog', 'user']);
 		} catch (error) {
 			throw new BadRequestException(
 				'An error occurred while retrieving Comments',
@@ -27,16 +29,18 @@ export class CommentsService {
 
 	async findAll(filter: ListOptions<Comment>): Promise<ListResponse<Comment>> {
 		try {
+			const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+
 			const sortQuery = {};
 			sortQuery[filter.sortBy] = filter.sortOrder === ESortOrder.ASC ? 1 : -1;
 			const limit = filter.limit || 10;
 			const offset = filter.offset || 0;
 			const result = await this.commentModel
-				.find(filter)
+				.find(filter.search ? { ...filter, name: rgx(filter.search) } : filter)
 				.sort(sortQuery)
 				.skip(offset)
 				.limit(limit)
-				.populate(['user', 'product']);
+				.populate(['user', 'blog']);
 
 			return {
 				items: result,
@@ -51,14 +55,7 @@ export class CommentsService {
 	}
 	async create(input: CreateCommentDto): Promise<Comment> {
 		try {
-			const blog = await this.blogService.findOne({
-				_id: input.blog,
-			});
-			if (!blog) {
-				input.blog = blog._id;
-				return await this.commentModel.create(input);
-			}
-			throw new BadRequestException('Product has existed!');
+			return await this.commentModel.create(input);
 		} catch (err) {
 			return err;
 		}
@@ -79,15 +76,20 @@ export class CommentsService {
 	// 	}
 	// }
 
-	async updateOne(
-		input: UpdateCommentDto,
-		filter: Partial<Comment>,
-	): Promise<Comment> {
+	async updateStatus(input: UpdateCommentDto, id: string): Promise<Comment> {
 		try {
 			if (input.comment) {
-				return await this.commentModel.findByIdAndUpdate(filter._id, input, {
-					new: true,
-				});
+				return await this.commentModel.findByIdAndUpdate(
+					{
+						_id: id,
+					},
+					{
+						status: CommentStatus.Approved,
+					},
+					{
+						new: true,
+					},
+				);
 			}
 			throw new BadRequestException('Data invalid!');
 		} catch (err) {
